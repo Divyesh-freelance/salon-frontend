@@ -138,15 +138,10 @@ export default function AdminSettings() {
             {logoImageValue && (
               <div className="flex flex-col gap-3">
                 <p className="admin-label mb-0">Preview</p>
-                <div className="flex gap-4">
-                  <div className="flex items-center justify-center w-48 h-16 bg-neutral-50 border border-stone-200 px-4">
-                    <img src={logoImageValue} alt="Logo on light" className="h-8 w-auto object-contain max-w-full" />
-                  </div>
-                  <div className="flex items-center justify-center w-48 h-16 bg-stone-900 px-4">
-                    <img src={logoImageValue} alt="Logo on dark" className="h-8 w-auto object-contain max-w-full brightness-0 invert" />
-                  </div>
+                <div className="flex items-center justify-center w-48 h-16 bg-neutral-50 border border-stone-200 px-4">
+                  <img src={logoImageValue} alt="Logo preview" className="h-8 w-auto object-contain max-w-full" />
                 </div>
-                <p className="font-sans text-xs text-stone-400">Left: navbar &nbsp;·&nbsp; Right: admin sidebar (auto-inverted)</p>
+                <p className="font-sans text-xs text-stone-400">Navbar preview</p>
               </div>
             )}
           </div>

@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { servicesApi, stylistsApi, settingsApi } from '../../api/services'
 import ServiceCard from '../../components/shared/ServiceCard'
 import StylistCard from '../../components/shared/StylistCard'
@@ -29,8 +30,21 @@ export default function HomePage() {
   })
 
   const settings = settingsData?.data || {}
-  const heroImage = settings.heroImages?.[0]?.url ||
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAn7bRvmYs4b-7tbqlIAWnOPkz1rc_Cb_VRFouj9c6AztAtJEkExHtk7aBSoiqEdS9qftFo6Sp0B7xwsYN9rs1XEL7ariziRL7ESE9knduD3Xmc6477nZkZQdhUbhHIPLBMRzs5V-tSCXfo_PDoiV6e9O5xf-HM7w4sERxtw6w8F83b8yS50z_3_Af7dI-PoSKWKkmpmY6f5bMsOEkNfHGSWCnmVw00Q7pDvfrfcTUBim38qjoxfmYRKF2d_pdzHF_UlyUFaujjdNAE'
+
+  const FALLBACK_HERO = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAn7bRvmYs4b-7tbqlIAWnOPkz1rc_Cb_VRFouj9c6AztAtJEkExHtk7aBSoiqEdS9qftFo6Sp0B7xwsYN9rs1XEL7ariziRL7ESE9knduD3Xmc6477nZkZQdhUbhHIPLBMRzs5V-tSCXfo_PDoiV6e9O5xf-HM7w4sERxtw6w8F83b8yS50z_3_Af7dI-PoSKWKkmpmY6f5bMsOEkNfHGSWCnmVw00Q7pDvfrfcTUBim38qjoxfmYRKF2d_pdzHF_UlyUFaujjdNAE'
+  const heroImages = settings.heroImages?.length > 0
+    ? settings.heroImages
+    : [{ url: FALLBACK_HERO }]
+
+  const [heroIndex, setHeroIndex] = useState(0)
+
+  // Auto-advance every 6 s — pauses if only 1 image
+  useEffect(() => {
+    if (heroImages.length <= 1) return
+    const t = setInterval(() => setHeroIndex((i) => (i + 1) % heroImages.length), 6000)
+    return () => clearInterval(t)
+  }, [heroImages.length])
+
   const philosophyImage = settings.philosophyImage ||
     'https://lh3.googleusercontent.com/aida-public/AB6AXuAJHdCX5hz9o5GMbNDSPGi3gJxLzHtpvLxkpDRPIq1uIRET1jCyafn2j2isYOLbF4y4z_CaAKYk5smPSO3aboOiI_MHa357MLUSI9k_KIszJPW--qBxGIcScEEFd6KrbjpPBNc_Wxve1Vob2S_92Kb9OoKoJUcCC11jmeySuif65XK_u9vij8wd_jLcVQRm6p_yNL6PTs07iRd6jKfVJF_OAyz4OxP-mgs8yAoQ9CeC_eqr-WkCfRpYE0PaOQBc8pXSxFbGcpzLuYUM'
 
@@ -38,18 +52,25 @@ export default function HomePage() {
     <>
       {/* ─── Hero Section ─────────────────────────────────────────────────── */}
       <section className="relative h-screen w-full flex items-center overflow-hidden">
+
+        {/* Crossfade background carousel */}
         <div className="absolute inset-0 z-0">
-          <motion.img
-            className="w-full h-full object-cover grayscale-[20%] contrast-[1.05]"
-            src={heroImage}
-            alt="RajLaxmi Makeup Studio"
-            initial={{ scale: 1.05, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          />
+          <AnimatePresence mode="sync">
+            <motion.img
+              key={heroIndex}
+              className="absolute inset-0 w-full h-full object-cover grayscale-[20%] contrast-[1.05]"
+              src={heroImages[heroIndex].url}
+              alt={`RajLaxmi Makeup Studio — slide ${heroIndex + 1}`}
+              initial={{ opacity: 0, scale: 1.04 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </AnimatePresence>
           <div className="absolute inset-0 bg-black/10" />
         </div>
 
+        {/* Hero content — stays fixed, doesn't transition with images */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full mt-24">
           <div className="max-w-3xl">
             <motion.span
@@ -58,7 +79,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.7 }}
             >
-              A New Era of Aesthetic Mastery
+              {settings.tagline || 'A New Era of Aesthetic Mastery'}
             </motion.span>
             <motion.h1
               className="font-serif text-5xl md:text-7xl text-stone-900 leading-[1.05] mb-10 italic"
@@ -92,9 +113,32 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Slide indicators — only shown when more than one image */}
+        {heroImages.length > 1 && (
+          <motion.div
+            className="absolute bottom-12 left-6 md:left-12 flex items-center gap-3 z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.8 }}
+          >
+            {heroImages.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setHeroIndex(i)}
+                aria-label={`Go to slide ${i + 1}`}
+                className={`h-px transition-all duration-500 ${
+                  i === heroIndex
+                    ? 'w-10 bg-stone-900'
+                    : 'w-4 bg-stone-400 hover:bg-stone-600'
+                }`}
+              />
+            ))}
+          </motion.div>
+        )}
+
         {/* Location badge */}
         <motion.div
-          className="absolute bottom-12 right-6 md:right-12 flex flex-col items-end"
+          className="absolute bottom-12 right-6 md:right-12 flex flex-col items-end z-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 0.8 }}

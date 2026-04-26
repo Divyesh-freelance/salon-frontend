@@ -56,7 +56,7 @@ export default function AdminLayout() {
                   <img
                     src={logoImage}
                     alt={salonName}
-                    className="h-7 w-auto object-contain max-w-[140px] brightness-0 invert"
+                    className="h-7 w-auto object-contain max-w-[140px]"
                   />
                 ) : (
                   <span className="font-serif tracking-widest text-sm uppercase text-stone-50">

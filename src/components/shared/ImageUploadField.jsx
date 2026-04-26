@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { getImageUrl } from '../../utils/format'
 
@@ -20,6 +20,15 @@ export default function ImageUploadField({
   aspectClass = 'aspect-video',
 }) {
   const [mode, setMode] = useState(value && !value.startsWith('blob:') ? 'preview' : 'upload')
+
+  // Sync mode when value is populated externally (e.g. after form reset() loads settings)
+  useEffect(() => {
+    if (value && !value.startsWith('blob:')) {
+      setMode('preview')
+    } else if (!value) {
+      setMode('upload')
+    }
+  }, [value])
   const [urlInput, setUrlInput] = useState('')
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
