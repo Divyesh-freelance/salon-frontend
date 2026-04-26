@@ -6,6 +6,7 @@ node_modules/
 .env.local
 .env.*.local
 .env.example
+nginx.config
 
 # Build output
 dist/
