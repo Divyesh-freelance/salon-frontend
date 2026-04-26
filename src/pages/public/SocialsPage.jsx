@@ -5,136 +5,176 @@ import { socialVideosApi, settingsApi } from '../../api/services'
 import Loader from '../../components/shared/Loader'
 import CTASection from '../../components/shared/CTASection'
 
-// ─── Platform config ───────────────────────────────────────────────────────────
-const PLATFORM_CONFIG = {
-  youtube: {
-    label: 'YouTube',
-    icon: 'smart_display',
-    accent: 'text-red-500',
-    border: 'border-red-400',
-    bg: 'bg-red-50',
-    badgeBg: 'bg-red-50 text-red-600',
-    button: 'hover:border-red-400 hover:text-red-500',
-  },
-  instagram: {
-    label: 'Instagram',
-    icon: 'photo_camera',
-    accent: 'text-pink-500',
-    border: 'border-pink-400',
-    bg: 'bg-pink-50',
-    badgeBg: 'bg-pink-50 text-pink-600',
-    button: 'hover:border-pink-400 hover:text-pink-500',
-  },
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Extract YouTube video ID from an embed URL */
+function ytId(embedUrl) {
+  return embedUrl?.split('/embed/')?.[1]?.split('?')?.[0] ?? null
 }
 
-// ─── Single video embed — large format, no scroll needed ──────────────────────
-function VideoEmbed({ video, index }) {
-  const [playing, setPlaying] = useState(false)
-  const cfg = PLATFORM_CONFIG[video.platform] || PLATFORM_CONFIG.youtube
+/** YouTube thumbnail — tries maxres, falls back to hqdefault */
+function ytThumb(embedUrl) {
+  const id = ytId(embedUrl)
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null
+}
 
-  // Instagram reels are portrait (9:16); YouTube is landscape (16:9)
-  const isPortrait = video.platform === 'instagram'
+/** Derive the original Instagram post URL from our stored embedUrl */
+function igPostUrl(embedUrl) {
+  // embedUrl: https://www.instagram.com/reel/CODE/embed
+  return embedUrl?.replace('/embed', '') ?? '#'
+}
+
+// ─── YouTube embed card ────────────────────────────────────────────────────────
+function YouTubeCard({ video, index }) {
+  const [playing, setPlaying] = useState(false)
+  const thumb = ytThumb(video.embedUrl)
 
   return (
-    <motion.div
-      className="bg-white border border-stone-200 overflow-hidden"
-      initial={{ opacity: 0, y: 28 }}
+    <motion.article
+      className="group bg-white border border-stone-100 overflow-hidden hover:shadow-xl transition-shadow duration-500"
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{ delay: index * 0.07, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ delay: index * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Embed — tall enough to watch without scrolling */}
-      <div
-        className={`relative w-full bg-stone-100 overflow-hidden ${
-          isPortrait ? 'aspect-[9/16]' : 'aspect-video'
-        }`}
-        style={isPortrait ? { minHeight: 480 } : { minHeight: 420 }}
-      >
+      <div className="relative aspect-video bg-stone-900 overflow-hidden">
         {playing ? (
           <iframe
-            src={`${video.embedUrl}${video.platform === 'youtube' ? '&autoplay=1' : ''}`}
+            src={`${video.embedUrl}&autoplay=1`}
             title={video.title}
             className="absolute inset-0 w-full h-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
         ) : (
           <button
             onClick={() => setPlaying(true)}
             aria-label={`Play ${video.title}`}
-            className="absolute inset-0 w-full h-full flex flex-col items-center justify-center gap-5 group"
+            className="absolute inset-0 w-full h-full"
           >
-            {/* Background */}
-            <div className={`absolute inset-0 ${cfg.bg} opacity-40 group-hover:opacity-70 transition-opacity duration-500`} />
-            <div className="absolute inset-0 bg-stone-900/10 group-hover:bg-stone-900/5 transition-all duration-500" />
+            {/* Thumbnail */}
+            {thumb && (
+              <img
+                src={thumb}
+                alt={video.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+            )}
+            {/* Scrim */}
+            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors duration-500" />
 
-            {/* Play button */}
-            <div className="relative z-10 w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:shadow-2xl transition-all duration-400">
-              <span className="material-symbols-outlined text-stone-900" style={{ fontSize: 42 }}>play_arrow</span>
-            </div>
-
-            <div className="relative z-10 text-center px-8">
-              <p className="font-serif text-xl text-stone-800 mb-1">{video.title}</p>
-              <p className="font-sans text-xs text-stone-500">Click to play</p>
+            {/* Play pill */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex items-center gap-2.5 bg-white/95 backdrop-blur-sm px-6 py-3 shadow-lg group-hover:bg-white group-hover:scale-105 transition-all duration-300">
+                <span className="material-symbols-outlined text-red-600" style={{ fontSize: 22 }}>play_arrow</span>
+                <span className="font-sans text-xs font-semibold uppercase tracking-widest text-stone-900">Watch</span>
+              </div>
             </div>
           </button>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="px-6 py-4 flex items-center justify-between border-t border-stone-100">
-        <p className="font-serif text-base text-stone-900 truncate mr-4">{video.title}</p>
-        <span className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-sans text-xs font-semibold ${cfg.badgeBg}`}>
-          <span className="material-symbols-outlined" style={{ fontSize: 13 }}>{cfg.icon}</span>
-          {cfg.label}
-        </span>
+      {/* Caption */}
+      <div className="px-5 py-4 flex items-center gap-3 border-t border-stone-100">
+        <span className="material-symbols-outlined text-red-500 flex-shrink-0" style={{ fontSize: 18 }}>smart_display</span>
+        <p className="font-sans text-sm text-stone-700 truncate">{video.title}</p>
       </div>
-    </motion.div>
+    </motion.article>
   )
 }
 
-// ─── Social profile link button ────────────────────────────────────────────────
-function SocialLink({ href, icon, label, colorClass, description }) {
+// ─── Instagram card — links out (no noisy inline embed) ───────────────────────
+function InstagramCard({ video, index }) {
+  const postUrl = igPostUrl(video.embedUrl)
+
+  return (
+    <motion.a
+      href={postUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group relative block overflow-hidden bg-stone-900 border border-stone-800"
+      style={{ aspectRatio: '9/16' }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ delay: index * 0.07, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      aria-label={`Watch ${video.title} on Instagram`}
+    >
+      {/* Gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-stone-800 via-stone-900 to-stone-950" />
+
+      {/* Decorative accent */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-500/20 to-amber-500/10 blur-2xl" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-500/15 to-pink-400/10 blur-2xl" />
+
+      {/* Instagram wordmark */}
+      <div className="absolute top-5 left-5 flex items-center gap-2">
+        <span className="material-symbols-outlined text-white/60" style={{ fontSize: 16 }}>photo_camera</span>
+        <span className="font-sans text-[10px] font-semibold uppercase tracking-widest text-white/50">Instagram</span>
+      </div>
+
+      {/* Center content */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 p-6 text-center">
+        {/* Reel icon ring */}
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center bg-white/10 backdrop-blur-sm group-hover:bg-white/20 group-hover:scale-110 transition-all duration-400">
+            <span className="material-symbols-outlined text-white" style={{ fontSize: 28 }}>play_arrow</span>
+          </div>
+          {/* Rotating ring */}
+          <div className="absolute inset-0 rounded-full border border-pink-400/40 animate-spin" style={{ animationDuration: '8s' }} />
+        </div>
+
+        <div>
+          <p className="font-serif text-lg text-white leading-snug mb-1">{video.title}</p>
+          <p className="font-sans text-xs text-white/40">Tap to watch on Instagram</p>
+        </div>
+      </div>
+
+      {/* Bottom CTA bar */}
+      <div className="absolute bottom-0 inset-x-0 px-5 py-4 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-between">
+        <span className="font-sans text-xs text-white/60 uppercase tracking-wider">Watch Reel</span>
+        <span className="material-symbols-outlined text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" style={{ fontSize: 16 }}>open_in_new</span>
+      </div>
+
+      {/* Hover overlay */}
+      <div className="absolute inset-0 border-2 border-pink-400/0 group-hover:border-pink-400/30 transition-all duration-400" />
+    </motion.a>
+  )
+}
+
+// ─── Section heading ───────────────────────────────────────────────────────────
+function SectionHeading({ icon, label, color, count }) {
+  return (
+    <div className="flex items-center gap-4 mb-8">
+      <span className={`material-symbols-outlined ${color}`} style={{ fontSize: 22 }}>{icon}</span>
+      <h2 className="font-serif text-2xl text-stone-900">{label}</h2>
+      <span className="font-sans text-xs text-stone-400 bg-stone-100 px-2.5 py-1 rounded-full">{count}</span>
+      <div className="flex-1 h-px bg-stone-100" />
+    </div>
+  )
+}
+
+// ─── Social profile link ───────────────────────────────────────────────────────
+function ProfileLink({ href, icon, label, hoverClass }) {
   if (!href) return null
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`flex items-start gap-4 border border-stone-200 px-6 py-5 transition-all duration-300 group hover:shadow-md ${colorClass}`}
+      className={`group inline-flex items-center gap-2.5 border border-stone-200 px-5 py-3 font-sans text-xs font-semibold uppercase tracking-widest text-stone-600 transition-all duration-300 ${hoverClass}`}
     >
-      <span className="material-symbols-outlined text-2xl flex-shrink-0 mt-0.5">{icon}</span>
-      <div className="flex-1 min-w-0">
-        <p className="font-sans text-sm font-semibold uppercase tracking-widest">{label}</p>
-        {description && <p className="font-sans text-xs text-stone-400 mt-0.5">{description}</p>}
-      </div>
-      <span className="material-symbols-outlined text-stone-300 group-hover:text-current group-hover:translate-x-1 transition-all self-center">arrow_forward</span>
+      <span className="material-symbols-outlined" style={{ fontSize: 15 }}>{icon}</span>
+      {label}
+      <span className="material-symbols-outlined opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" style={{ fontSize: 13 }}>arrow_outward</span>
     </a>
-  )
-}
-
-// ─── Filter tab ────────────────────────────────────────────────────────────────
-function FilterTab({ active, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-6 py-2.5 font-sans text-xs font-semibold uppercase tracking-widest transition-all duration-200 ${
-        active
-          ? 'bg-stone-900 text-white'
-          : 'border border-stone-200 text-stone-500 hover:border-stone-900 hover:text-stone-900'
-      }`}
-    >
-      {children}
-    </button>
   )
 }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function SocialsPage() {
-  const [filter, setFilter] = useState('all')
-
   const { data: videosData, isLoading } = useQuery({
-    queryKey: ['social-videos-all'],
+    queryKey: ['social-videos-page'],
     queryFn: () => socialVideosApi.getAll({ limit: 50 }),
   })
 
@@ -147,123 +187,150 @@ export default function SocialsPage() {
   const allVideos = videosData?.data || []
   const settings = settingsData?.data || {}
 
-  const platforms = ['all', ...new Set(allVideos.map((v) => v.platform))]
+  const youtubeVideos = allVideos.filter((v) => v.platform === 'youtube')
+  const instagramVideos = allVideos.filter((v) => v.platform === 'instagram')
 
-  const filtered = filter === 'all' ? allVideos : allVideos.filter((v) => v.platform === filter)
-
-  // Instagram is portrait → 3-col; YouTube landscape → 2-col; mixed → 2-col
-  const hasInstagram = filtered.some((v) => v.platform === 'instagram')
-  const hasYouTube = filtered.some((v) => v.platform === 'youtube')
-  const gridCols =
-    filter === 'instagram'
-      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-      : 'grid-cols-1 md:grid-cols-2'
+  const hasContent = youtubeVideos.length > 0 || instagramVideos.length > 0
 
   return (
     <>
-      {/* ─── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 md:px-12 pt-48 mb-16">
+      {/* ─── Hero — tight & editorial ─────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 md:px-12 pt-40 pb-12">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col md:flex-row md:items-end md:justify-between gap-8"
         >
-          <span className="font-sans text-xs font-semibold text-amber-700 uppercase tracking-[0.3em] mb-4 block">
-            Studio in Motion
-          </span>
-          <h1 className="font-serif text-5xl md:text-7xl mb-6">Our Socials</h1>
-          <p className="font-sans text-lg text-stone-500 max-w-2xl leading-relaxed">
-            Behind-the-scenes reels, bridal transformations, and artistry in action —
-            everything straight from our studio.
-          </p>
-        </motion.div>
-      </section>
+          <div>
+            <span className="font-sans text-xs font-semibold text-amber-700 uppercase tracking-[0.3em] block mb-3">
+              Studio in Motion
+            </span>
+            <h1 className="font-serif text-5xl md:text-6xl text-stone-900">Our Socials</h1>
+          </div>
 
-      {/* ─── Social Profile Links ─────────────────────────────────────────── */}
-      {(settings.instagramUrl || settings.facebookUrl || settings.pinterestUrl) && (
-        <section className="max-w-7xl mx-auto px-6 md:px-12 mb-14">
-          <p className="font-sans text-xs text-stone-400 uppercase tracking-widest mb-4">Follow us on</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <SocialLink
+          {/* Social profile buttons — inline with title */}
+          <div className="flex flex-wrap gap-3">
+            <ProfileLink
               href={settings.instagramUrl}
               icon="photo_camera"
               label="Instagram"
-              description="Reels, posts & stories"
-              colorClass="hover:border-pink-400 hover:text-pink-600"
+              hoverClass="hover:border-pink-400 hover:text-pink-600"
             />
-            <SocialLink
-              href={
-                allVideos.some((v) => v.platform === 'youtube')
-                  ? `https://youtube.com`
-                  : null
-              }
-              icon="smart_display"
-              label="YouTube"
-              description="Full videos & tutorials"
-              colorClass="hover:border-red-400 hover:text-red-600"
-            />
-            <SocialLink
+            <ProfileLink
               href={settings.pinterestUrl}
               icon="push_pin"
               label="Pinterest"
-              description="Inspiration boards"
-              colorClass="hover:border-red-600 hover:text-red-700"
+              hoverClass="hover:border-red-500 hover:text-red-600"
             />
-            <SocialLink
+            <ProfileLink
               href={settings.facebookUrl}
               icon="groups"
               label="Facebook"
-              description="Updates & community"
-              colorClass="hover:border-blue-500 hover:text-blue-600"
+              hoverClass="hover:border-blue-500 hover:text-blue-600"
             />
           </div>
-        </section>
-      )}
+        </motion.div>
 
-      {/* ─── Platform Filter ──────────────────────────────────────────────── */}
-      {platforms.length > 2 && (
-        <section className="max-w-7xl mx-auto px-6 md:px-12 mb-10">
-          <div className="flex flex-wrap gap-3 border-b border-stone-200 pb-8">
-            {platforms.map((p) => (
-              <FilterTab key={p} active={filter === p} onClick={() => setFilter(p)}>
-                {p === 'all' ? 'All Videos' : PLATFORM_CONFIG[p]?.label || p}
-              </FilterTab>
-            ))}
-          </div>
-        </section>
-      )}
+        {/* Thin rule */}
+        <div className="mt-10 h-px bg-stone-200" />
+      </section>
 
-      {/* ─── Video Grid ───────────────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 md:px-12 mb-24">
+      {/* ─── Content ──────────────────────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 md:px-12 pb-24">
         {isLoading ? (
           <Loader size="lg" className="py-32" />
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center">
-            <span className="material-symbols-outlined text-5xl text-stone-300 mb-4">play_circle</span>
-            <p className="font-serif text-2xl text-stone-400 mb-2">No videos yet</p>
-            <p className="font-sans text-sm text-stone-400">
-              Check back soon — we&apos;re busy creating!
+        ) : !hasContent ? (
+          <div className="flex flex-col items-center justify-center py-40 text-center">
+            <span className="material-symbols-outlined text-5xl text-stone-200 mb-5">play_circle</span>
+            <p className="font-serif text-2xl text-stone-400 mb-2">Coming Soon</p>
+            <p className="font-sans text-sm text-stone-400 max-w-xs">
+              We&apos;re curating our best work. Check back soon.
             </p>
           </div>
         ) : (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={filter}
-              className={`grid gap-8 ${gridCols}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {filtered.map((video, i) => (
-                <VideoEmbed key={video.id} video={video} index={i} />
-              ))}
-            </motion.div>
-          </AnimatePresence>
+          <div className="space-y-16">
+
+            {/* ── YouTube section ── */}
+            {youtubeVideos.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                <SectionHeading
+                  icon="smart_display"
+                  label="YouTube"
+                  color="text-red-500"
+                  count={`${youtubeVideos.length} video${youtubeVideos.length !== 1 ? 's' : ''}`}
+                />
+                <div className={`grid gap-6 ${
+                  youtubeVideos.length === 1
+                    ? 'grid-cols-1 max-w-2xl'
+                    : 'grid-cols-1 md:grid-cols-2'
+                }`}>
+                  {youtubeVideos.map((v, i) => (
+                    <YouTubeCard key={v.id} video={v} index={i} />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── Divider between sections ── */}
+            {youtubeVideos.length > 0 && instagramVideos.length > 0 && (
+              <div className="h-px bg-stone-100" />
+            )}
+
+            {/* ── Instagram section ── */}
+            {instagramVideos.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                <SectionHeading
+                  icon="photo_camera"
+                  label="Instagram Reels"
+                  color="text-pink-500"
+                  count={`${instagramVideos.length} reel${instagramVideos.length !== 1 ? 's' : ''}`}
+                />
+                <div className={`grid gap-5 ${
+                  instagramVideos.length === 1
+                    ? 'grid-cols-1 max-w-xs'
+                    : instagramVideos.length === 2
+                    ? 'grid-cols-2 max-w-lg'
+                    : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
+                }`}>
+                  {instagramVideos.map((v, i) => (
+                    <InstagramCard key={v.id} video={v} index={i} />
+                  ))}
+                </div>
+
+                {/* Follow nudge */}
+                {settings.instagramUrl && (
+                  <div className="mt-8 flex items-center gap-4">
+                    <div className="flex-1 h-px bg-stone-100" />
+                    <a
+                      href={settings.instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 font-sans text-xs text-stone-400 hover:text-pink-500 transition-colors"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 14 }}>photo_camera</span>
+                      Follow us on Instagram for daily updates
+                      <span className="material-symbols-outlined" style={{ fontSize: 13 }}>arrow_outward</span>
+                    </a>
+                    <div className="flex-1 h-px bg-stone-100" />
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </div>
         )}
       </section>
 
-      {/* ─── CTA ──────────────────────────────────────────────────────────── */}
       <CTASection />
     </>
   )
