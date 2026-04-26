@@ -171,7 +171,7 @@ export default function HomePage() {
               src={philosophyImage}
               alt="Curated beauty care"
               loading="lazy"
-            />
+            />}
           </div>
           <div className="absolute -bottom-8 -right-8 w-48 h-48 bg-secondary-container p-6 flex flex-col justify-end">
             <span className="text-4xl font-serif text-secondary mb-2">01</span>
