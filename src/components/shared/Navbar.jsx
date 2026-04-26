@@ -23,6 +23,7 @@ export default function Navbar() {
     staleTime: 1000 * 60 * 30,
   })
   const salonName = settingsData?.data?.salonName || 'RajLaxmi Makeup Studio'
+  const logoImage = settingsData?.data?.logoImage || null
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -41,11 +42,18 @@ export default function Navbar() {
     >
       <div className="flex justify-between items-center max-w-7xl mx-auto px-6 md:px-12 py-6 md:py-8 w-full">
         {/* Logo */}
-        <Link
-          to="/"
-          className="text-lg md:text-2xl font-serif tracking-[0.2em] text-stone-900 uppercase hover:text-amber-700 transition-colors duration-500"
-        >
-          RajLaxmi
+        <Link to="/" className="flex items-center hover:opacity-80 transition-opacity duration-300">
+          {logoImage ? (
+            <img
+              src={logoImage}
+              alt={salonName}
+              className="h-8 md:h-10 w-auto object-contain max-w-[160px]"
+            />
+          ) : (
+            <span className="text-lg md:text-2xl font-serif tracking-[0.2em] text-stone-900 uppercase hover:text-amber-700 transition-colors duration-500">
+              {salonName.split(' ')[0]}
+            </span>
+          )}
         </Link>
 
         {/* Desktop Nav */}

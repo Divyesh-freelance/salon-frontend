@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
+import { settingsApi } from '../api/services'
 import toast from 'react-hot-toast'
 
 const navItems = [
@@ -18,6 +20,14 @@ export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+
+  const { data: settingsData } = useQuery({
+    queryKey: ['settings'],
+    queryFn: settingsApi.get,
+    staleTime: 1000 * 60 * 30,
+  })
+  const logoImage = settingsData?.data?.logoImage || null
+  const salonName = settingsData?.data?.salonName || 'RajLaxmi'
 
   const handleLogout = async () => {
     await logout()
@@ -41,9 +51,18 @@ export default function AdminLayout() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="font-serif tracking-widest text-sm uppercase text-stone-50"
               >
-                RajLaxmi
+                {logoImage ? (
+                  <img
+                    src={logoImage}
+                    alt={salonName}
+                    className="h-7 w-auto object-contain max-w-[140px] brightness-0 invert"
+                  />
+                ) : (
+                  <span className="font-serif tracking-widest text-sm uppercase text-stone-50">
+                    {salonName.split(' ')[0]}
+                  </span>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

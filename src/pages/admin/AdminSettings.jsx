@@ -42,6 +42,7 @@ export default function AdminSettings() {
   }, [settings, reset])
 
   const philosophyImageValue = watch('philosophyImage') || ''
+  const logoImageValue = watch('logoImage') || ''
 
   const updateMutation = useMutation({
     mutationFn: settingsApi.update,
@@ -112,6 +113,42 @@ export default function AdminSettings() {
               <label className="admin-label">Slot Interval (minutes)</label>
               <input {...register('slotInterval', { valueAsNumber: true })} type="number" className="admin-input" />
             </div>
+          </div>
+        </div>
+
+        {/* ── Logo ──────────────────────────────────────────────────────── */}
+        <div className="bg-white border border-stone-200 p-8">
+          <h2 className="font-serif text-xl mb-1">Logo</h2>
+          <p className="font-sans text-sm text-stone-500 mb-6">
+            Shown in the navigation bar and admin sidebar. Use a transparent PNG for best results.
+            If no logo is set the studio name text is displayed as a fallback.
+          </p>
+          <div className="flex flex-col md:flex-row gap-8 items-start">
+            <div className="w-64">
+              <input type="hidden" {...register('logoImage')} />
+              <ImageUploadField
+                value={logoImageValue}
+                onChange={(url) => setValue('logoImage', url, { shouldDirty: true })}
+                uploadFn={settingsApi.uploadImage}
+                label="Logo Image"
+                aspectClass="aspect-[3/1]"
+              />
+            </div>
+            {/* Live preview on both light and dark backgrounds */}
+            {logoImageValue && (
+              <div className="flex flex-col gap-3">
+                <p className="admin-label mb-0">Preview</p>
+                <div className="flex gap-4">
+                  <div className="flex items-center justify-center w-48 h-16 bg-neutral-50 border border-stone-200 px-4">
+                    <img src={logoImageValue} alt="Logo on light" className="h-8 w-auto object-contain max-w-full" />
+                  </div>
+                  <div className="flex items-center justify-center w-48 h-16 bg-stone-900 px-4">
+                    <img src={logoImageValue} alt="Logo on dark" className="h-8 w-auto object-contain max-w-full brightness-0 invert" />
+                  </div>
+                </div>
+                <p className="font-sans text-xs text-stone-400">Left: navbar &nbsp;·&nbsp; Right: admin sidebar (auto-inverted)</p>
+              </div>
+            )}
           </div>
         </div>
 
