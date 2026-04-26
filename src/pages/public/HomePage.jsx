@@ -23,7 +23,7 @@ export default function HomePage() {
     queryFn: () => stylistsApi.getAll({ active: 'true', limit: 3 }),
   })
 
-  const { data: settingsData } = useQuery({
+  const { data: settingsData, isLoading: settingsLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: settingsApi.get,
     staleTime: 1000 * 60 * 30,
@@ -32,9 +32,13 @@ export default function HomePage() {
   const settings = settingsData?.data || {}
 
   const FALLBACK_HERO = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAn7bRvmYs4b-7tbqlIAWnOPkz1rc_Cb_VRFouj9c6AztAtJEkExHtk7aBSoiqEdS9qftFo6Sp0B7xwsYN9rs1XEL7ariziRL7ESE9knduD3Xmc6477nZkZQdhUbhHIPLBMRzs5V-tSCXfo_PDoiV6e9O5xf-HM7w4sERxtw6w8F83b8yS50z_3_Af7dI-PoSKWKkmpmY6f5bMsOEkNfHGSWCnmVw00Q7pDvfrfcTUBim38qjoxfmYRKF2d_pdzHF_UlyUFaujjdNAE'
-  const heroImages = settings.heroImages?.length > 0
-    ? settings.heroImages
-    : [{ url: FALLBACK_HERO }]
+  // While settings are still loading, keep heroImages empty so nothing renders in the background yet.
+  // Only fall back to the placeholder once we know settings loaded but have no hero images configured.
+  const heroImages = settingsLoading
+    ? []
+    : settings.heroImages?.length > 0
+      ? settings.heroImages
+      : [{ url: FALLBACK_HERO }]
 
   const [heroIndex, setHeroIndex] = useState(0)
 
@@ -45,8 +49,11 @@ export default function HomePage() {
     return () => clearInterval(t)
   }, [heroImages.length])
 
-  const philosophyImage = settings.philosophyImage ||
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAJHdCX5hz9o5GMbNDSPGi3gJxLzHtpvLxkpDRPIq1uIRET1jCyafn2j2isYOLbF4y4z_CaAKYk5smPSO3aboOiI_MHa357MLUSI9k_KIszJPW--qBxGIcScEEFd6KrbjpPBNc_Wxve1Vob2S_92Kb9OoKoJUcCC11jmeySuif65XK_u9vij8wd_jLcVQRm6p_yNL6PTs07iRd6jKfVJF_OAyz4OxP-mgs8yAoQ9CeC_eqr-WkCfRpYE0PaOQBc8pXSxFbGcpzLuYUM'
+  const FALLBACK_PHILOSOPHY = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAJHdCX5hz9o5GMbNDSPGi3gJxLzHtpvLxkpDRPIq1uIRET1jCyafn2j2isYOLbF4y4z_CaAKYk5smPSO3aboOiI_MHa357MLUSI9k_KIszJPW--qBxGIcScEEFd6KrbjpPBNc_Wxve1Vob2S_92Kb9OoKoJUcCC11jmeySuif65XK_u9vij8wd_jLcVQRm6p_yNL6PTs07iRd6jKfVJF_OAyz4OxP-mgs8yAoQ9CeC_eqr-WkCfRpYE0PaOQBc8pXSxFbGcpzLuYUM'
+  // Same pattern as heroImages — hold off on the fallback until settings have loaded.
+  const philosophyImage = settingsLoading
+    ? null
+    : settings.philosophyImage || FALLBACK_PHILOSOPHY
 
   return (
     <>
@@ -74,7 +81,7 @@ export default function HomePage() {
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full mt-24">
           <div className="max-w-3xl">
             <motion.span
-              className="font-sans text-xs font-semibold text-amber-700 tracking-widest uppercase block mb-6"
+              className="font-sans text-xs font-semibold text-stone-400 tracking-widest uppercase block mb-6"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.7 }}
@@ -82,7 +89,7 @@ export default function HomePage() {
               {settings.tagline || 'A New Era of Aesthetic Mastery'}
             </motion.span>
             <motion.h1
-              className="font-serif text-5xl md:text-7xl text-stone-900 leading-[1.05] mb-10 italic"
+              className="font-serif text-5xl md:text-7xl text-stone-200 leading-[1.05] mb-10 italic"
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
@@ -126,11 +133,10 @@ export default function HomePage() {
                 key={i}
                 onClick={() => setHeroIndex(i)}
                 aria-label={`Go to slide ${i + 1}`}
-                className={`h-px transition-all duration-500 ${
-                  i === heroIndex
-                    ? 'w-10 bg-stone-900'
-                    : 'w-4 bg-stone-400 hover:bg-stone-600'
-                }`}
+                className={`h-px transition-all duration-500 ${i === heroIndex
+                  ? 'w-10 bg-stone-900'
+                  : 'w-4 bg-stone-400 hover:bg-stone-600'
+                  }`}
               />
             ))}
           </motion.div>
@@ -160,7 +166,7 @@ export default function HomePage() {
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="aspect-[4/5] bg-surface-variant overflow-hidden">
-            <img
+            {philosophyImage && <img
               className="w-full h-full object-cover mix-blend-multiply opacity-90"
               src={philosophyImage}
               alt="Curated beauty care"
