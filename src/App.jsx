@@ -22,6 +22,7 @@ import AdminServices from './pages/admin/AdminServices'
 import AdminStylists from './pages/admin/AdminStylists'
 import AdminBookings from './pages/admin/AdminBookings'
 import AdminGallery from './pages/admin/AdminGallery'
+import AdminSocialVideos from './pages/admin/AdminSocialVideos'
 import AdminSettings from './pages/admin/AdminSettings'
 
 export default function App() {
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="/admin/stylists" element={<AdminStylists />} />
           <Route path="/admin/bookings" element={<AdminBookings />} />
           <Route path="/admin/gallery" element={<AdminGallery />} />
+          <Route path="/admin/social-videos" element={<AdminSocialVideos />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>
 

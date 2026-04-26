@@ -10,6 +10,7 @@ const navItems = [
   { to: '/admin/services', icon: 'spa', label: 'Services' },
   { to: '/admin/stylists', icon: 'person', label: 'Stylists' },
   { to: '/admin/gallery', icon: 'photo_library', label: 'Gallery' },
+  { to: '/admin/social-videos', icon: 'smart_display', label: 'Social Videos' },
   { to: '/admin/settings', icon: 'settings', label: 'Settings' },
 ]
 

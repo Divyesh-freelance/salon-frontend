@@ -19,6 +19,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
           <motion.div
             className="absolute inset-0 bg-black/40"
             initial={{ opacity: 0 }}
@@ -26,15 +27,18 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
+
+          {/* Modal panel — capped at 90vh, scrollable body */}
           <motion.div
-            className={`relative w-full ${sizes[size]} bg-white shadow-2xl overflow-hidden`}
+            className={`relative w-full ${sizes[size]} bg-white shadow-2xl flex flex-col max-h-[90vh]`}
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
+            {/* Sticky header — stays visible while content scrolls */}
             {title && (
-              <div className="flex justify-between items-center px-8 py-6 border-b border-stone-100">
+              <div className="flex-shrink-0 flex justify-between items-center px-8 py-5 border-b border-stone-100 bg-white z-10">
                 <h2 className="font-serif text-xl text-stone-900">{title}</h2>
                 <button
                   onClick={onClose}
@@ -44,7 +48,11 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
                 </button>
               </div>
             )}
-            <div className="p-8">{children}</div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto p-8">
+              {children}
+            </div>
           </motion.div>
         </div>
       )}

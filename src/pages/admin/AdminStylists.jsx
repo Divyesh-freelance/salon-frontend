@@ -6,11 +6,13 @@ import toast from 'react-hot-toast'
 import { stylistsApi, servicesApi } from '../../api/services'
 import Modal from '../../components/shared/Modal'
 import Loader from '../../components/shared/Loader'
+import ImageUploadField from '../../components/shared/ImageUploadField'
 import { getImageUrl } from '../../utils/format'
 
 function StylistForm({ onSubmit, defaultValues, services, isLoading }) {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({ defaultValues })
   const selectedServiceIds = watch('serviceIds') || []
+  const imageValue = watch('image') || ''
 
   const toggleService = (serviceId) => {
     const current = Array.isArray(selectedServiceIds) ? selectedServiceIds : []
@@ -22,7 +24,9 @@ function StylistForm({ onSubmit, defaultValues, services, isLoading }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
+      {/* ── Row 1: Name + Title ── */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="admin-label">Full Name *</label>
@@ -32,65 +36,90 @@ function StylistForm({ onSubmit, defaultValues, services, isLoading }) {
         <div>
           <label className="admin-label">Title *</label>
           <input {...register('title', { required: true })} className="admin-input" placeholder="e.g. Creative Director" />
+          {errors.title && <p className="form-error">Title required</p>}
         </div>
+      </div>
+
+      {/* ── Row 2: Specialization ── */}
+      <div>
+        <label className="admin-label">Specialization *</label>
+        <input {...register('specialization', { required: true })} className="admin-input" placeholder="e.g. Bridal & Editorial Makeup" />
+        {errors.specialization && <p className="form-error">Specialization required</p>}
+      </div>
+
+      {/* ── Row 3: Bio ── */}
+      <div>
+        <label className="admin-label">Bio *</label>
+        <textarea {...register('bio', { required: true })} rows={3} className="admin-input resize-none" placeholder="Brief professional background..." />
+        {errors.bio && <p className="form-error">Bio required</p>}
+      </div>
+
+      {/* ── Row 4: Photo + Sort + Active ── */}
+      <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
-          <label className="admin-label">Specialization *</label>
-          <input {...register('specialization', { required: true })} className="admin-input" placeholder="e.g. Bridal & Editorial Makeup" />
-        </div>
-        <div className="col-span-2">
-          <label className="admin-label">Bio *</label>
-          <textarea {...register('bio', { required: true })} rows={4} className="admin-input resize-none" />
-        </div>
-        <div className="col-span-2">
-          <label className="admin-label">Image URL</label>
-          <input {...register('image')} className="admin-input" placeholder="https://..." />
+          <input type="hidden" {...register('image')} />
+          <ImageUploadField
+            value={imageValue}
+            onChange={(url) => setValue('image', url, { shouldDirty: true })}
+            uploadFn={stylistsApi.uploadImage}
+            label="Artisan Photo"
+            aspectClass="aspect-square"
+          />
         </div>
         <div>
           <label className="admin-label">Sort Order</label>
           <input {...register('sortOrder', { valueAsNumber: true })} type="number" className="admin-input" placeholder="0" />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pt-6">
           <input {...register('isActive')} type="checkbox" id="stylistActive" className="w-4 h-4" defaultChecked />
-          <label htmlFor="stylistActive" className="font-sans text-sm">Active</label>
+          <label htmlFor="stylistActive" className="font-sans text-sm text-stone-700">Active (visible to clients)</label>
         </div>
+      </div>
 
-        {/* ── Service Assignments ─────────────────────────────────── */}
-        <div className="col-span-2">
-          <label className="admin-label">Services Offered</label>
-          <p className="font-sans text-xs text-stone-400 mb-3">
-            Select which services this artisan can perform. Clients can only book this artisan for ticked services.
-          </p>
-          {services.length === 0 ? (
-            <p className="font-sans text-sm text-stone-400 italic">No services found — add services first.</p>
-          ) : (
-            <div className="border border-stone-200 rounded-sm divide-y divide-stone-100 max-h-52 overflow-y-auto">
-              {services.map((s) => {
+      {/* ── Row 5: Services — compact 2-col grid ── */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="admin-label mb-0">Services Offered</label>
+          {Array.isArray(selectedServiceIds) && selectedServiceIds.length > 0 && (
+            <span className="font-sans text-xs text-amber-700 font-semibold">
+              {selectedServiceIds.length} selected
+            </span>
+          )}
+        </div>
+        {services.length === 0 ? (
+          <p className="font-sans text-sm text-stone-400 italic">No services found — add services first.</p>
+        ) : (
+          <div className="border border-stone-200 divide-y divide-stone-100 max-h-40 overflow-y-auto">
+            <div className="grid grid-cols-2">
+              {services.map((s, i) => {
                 const checked = Array.isArray(selectedServiceIds) && selectedServiceIds.includes(s.id)
                 return (
                   <label
                     key={s.id}
-                    className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-stone-50 transition-colors"
+                    className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer hover:bg-stone-50 transition-colors ${
+                      i % 2 === 0 ? 'border-r border-stone-100' : ''
+                    }`}
                   >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleService(s.id)}
-                      className="w-4 h-4 accent-stone-900 flex-shrink-0"
+                      className="w-3.5 h-3.5 accent-stone-900 flex-shrink-0"
                     />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-sans text-sm text-stone-800 truncate">{s.title}</p>
-                      <p className="font-sans text-xs text-stone-400">{s.category}</p>
+                    <div className="min-w-0">
+                      <p className="font-sans text-xs text-stone-800 truncate leading-tight">{s.title}</p>
+                      <p className="font-sans text-[10px] text-stone-400 leading-tight">{s.category}</p>
                     </div>
                   </label>
                 )
               })}
             </div>
-          )}
-          {/* Hidden field keeps the array in form state */}
-          <input type="hidden" {...register('serviceIds')} />
-        </div>
+          </div>
+        )}
+        <input type="hidden" {...register('serviceIds')} />
       </div>
 
+      {/* ── Save button ── */}
       <button
         type="submit"
         disabled={isLoading}

@@ -7,6 +7,7 @@ import StylistCard from '../../components/shared/StylistCard'
 import CTASection from '../../components/shared/CTASection'
 import Loader from '../../components/shared/Loader'
 import TestimonialsSection from '../../components/shared/TestimonialsSection'
+import SocialVideosSection from '../../components/shared/SocialVideosSection'
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -233,6 +234,9 @@ export default function HomePage() {
 
       {/* ─── Testimonials ─────────────────────────────────────────────────── */}
       <TestimonialsSection />
+
+      {/* ─── Social Videos ────────────────────────────────────────────────── */}
+      <SocialVideosSection />
 
       {/* ─── CTA ──────────────────────────────────────────────────────────── */}
       <CTASection />

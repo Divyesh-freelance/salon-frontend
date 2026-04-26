@@ -27,6 +27,14 @@ export const stylistsApi = {
   create: (data) => adminApi.post('/admin/stylists', data).then((r) => r.data),
   update: (id, data) => adminApi.put(`/admin/stylists/${id}`, data).then((r) => r.data),
   remove: (id) => adminApi.delete(`/admin/stylists/${id}`).then((r) => r.data),
+  uploadImage: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('type', 'stylists')
+    return adminApi
+      .post('/admin/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      .then((r) => r.data)
+  },
 }
 
 export const bookingsApi = {
@@ -60,6 +68,16 @@ export const settingsApi = {
   dashboard: () => adminApi.get('/admin/dashboard').then((r) => r.data),
   uploadFile: (formData) =>
     adminApi.post('/admin/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data),
+}
+
+export const socialVideosApi = {
+  getAll: (params) => api.get('/social-videos', { params }).then((r) => r.data),
+
+  // Admin
+  adminGetAll: (params) => adminApi.get('/admin/social-videos', { params }).then((r) => r.data),
+  create: (data) => adminApi.post('/admin/social-videos', data).then((r) => r.data),
+  update: (id, data) => adminApi.put(`/admin/social-videos/${id}`, data).then((r) => r.data),
+  remove: (id) => adminApi.delete(`/admin/social-videos/${id}`).then((r) => r.data),
 }
 
 export const authApi = {
