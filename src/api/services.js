@@ -68,6 +68,15 @@ export const settingsApi = {
   dashboard: () => adminApi.get('/admin/dashboard').then((r) => r.data),
   uploadFile: (formData) =>
     adminApi.post('/admin/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data),
+  // Receives a raw File, wraps in FormData — compatible with ImageUploadField
+  uploadImage: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('type', 'settings')
+    return adminApi
+      .post('/admin/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      .then((r) => r.data)
+  },
 }
 
 export const socialVideosApi = {

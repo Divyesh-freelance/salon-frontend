@@ -31,6 +31,8 @@ export default function HomePage() {
   const settings = settingsData?.data || {}
   const heroImage = settings.heroImages?.[0]?.url ||
     'https://lh3.googleusercontent.com/aida-public/AB6AXuAn7bRvmYs4b-7tbqlIAWnOPkz1rc_Cb_VRFouj9c6AztAtJEkExHtk7aBSoiqEdS9qftFo6Sp0B7xwsYN9rs1XEL7ariziRL7ESE9knduD3Xmc6477nZkZQdhUbhHIPLBMRzs5V-tSCXfo_PDoiV6e9O5xf-HM7w4sERxtw6w8F83b8yS50z_3_Af7dI-PoSKWKkmpmY6f5bMsOEkNfHGSWCnmVw00Q7pDvfrfcTUBim38qjoxfmYRKF2d_pdzHF_UlyUFaujjdNAE'
+  const philosophyImage = settings.philosophyImage ||
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuAJHdCX5hz9o5GMbNDSPGi3gJxLzHtpvLxkpDRPIq1uIRET1jCyafn2j2isYOLbF4y4z_CaAKYk5smPSO3aboOiI_MHa357MLUSI9k_KIszJPW--qBxGIcScEEFd6KrbjpPBNc_Wxve1Vob2S_92Kb9OoKoJUcCC11jmeySuif65XK_u9vij8wd_jLcVQRm6p_yNL6PTs07iRd6jKfVJF_OAyz4OxP-mgs8yAoQ9CeC_eqr-WkCfRpYE0PaOQBc8pXSxFbGcpzLuYUM'
 
   return (
     <>
@@ -116,7 +118,7 @@ export default function HomePage() {
           <div className="aspect-[4/5] bg-surface-variant overflow-hidden">
             <img
               className="w-full h-full object-cover mix-blend-multiply opacity-90"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJHdCX5hz9o5GMbNDSPGi3gJxLzHtpvLxkpDRPIq1uIRET1jCyafn2j2isYOLbF4y4z_CaAKYk5smPSO3aboOiI_MHa357MLUSI9k_KIszJPW--qBxGIcScEEFd6KrbjpPBNc_Wxve1Vob2S_92Kb9OoKoJUcCC11jmeySuif65XK_u9vij8wd_jLcVQRm6p_yNL6PTs07iRd6jKfVJF_OAyz4OxP-mgs8yAoQ9CeC_eqr-WkCfRpYE0PaOQBc8pXSxFbGcpzLuYUM"
+              src={philosophyImage}
               alt="Curated beauty care"
               loading="lazy"
             />

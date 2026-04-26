@@ -1,16 +1,19 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { settingsApi } from '../../api/services'
 import Loader from '../../components/shared/Loader'
+import ImageUploadField from '../../components/shared/ImageUploadField'
+import { getImageUrl } from '../../utils/format'
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-const DEFAULT_HOURS = { open: '09:00', close: '19:00', isOpen: true }
 
 export default function AdminSettings() {
   const qc = useQueryClient()
+  const heroFileRef = useRef(null)
+  const [uploadingHero, setUploadingHero] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['settings'],
@@ -19,11 +22,26 @@ export default function AdminSettings() {
 
   const settings = data?.data
 
-  const { register, handleSubmit, reset, watch } = useForm()
+  const { register, handleSubmit, reset, watch, control, setValue } = useForm({
+    defaultValues: { heroImages: [], philosophyImage: '' },
+  })
+
+  const { fields: heroFields, append: appendHero, remove: removeHero } = useFieldArray({
+    control,
+    name: 'heroImages',
+  })
 
   useEffect(() => {
-    if (settings) reset(settings)
+    if (settings) {
+      reset({
+        ...settings,
+        heroImages: settings.heroImages || [],
+        philosophyImage: settings.philosophyImage || '',
+      })
+    }
   }, [settings, reset])
+
+  const philosophyImageValue = watch('philosophyImage') || ''
 
   const updateMutation = useMutation({
     mutationFn: settingsApi.update,
@@ -33,6 +51,23 @@ export default function AdminSettings() {
     },
     onError: () => toast.error('Error saving settings'),
   })
+
+  // Upload a hero image and append it to the array immediately
+  const handleHeroUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingHero(true)
+    try {
+      const result = await settingsApi.uploadImage(file)
+      appendHero({ url: result.data.url })
+      toast.success('Hero image added')
+    } catch {
+      toast.error('Upload failed')
+    } finally {
+      setUploadingHero(false)
+      if (heroFileRef.current) heroFileRef.current.value = ''
+    }
+  }
 
   if (isLoading) return <Loader size="lg" className="py-32" />
 
@@ -45,7 +80,7 @@ export default function AdminSettings() {
 
       <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))} className="space-y-8">
 
-        {/* Salon Info */}
+        {/* ── Studio Information ─────────────────────────────────────────── */}
         <div className="bg-white border border-stone-200 p-8">
           <h2 className="font-serif text-xl mb-6">Studio Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -80,7 +115,7 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        {/* Social Links */}
+        {/* ── Social Links ───────────────────────────────────────────────── */}
         <div className="bg-white border border-stone-200 p-8">
           <h2 className="font-serif text-xl mb-6">Social Media</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -92,10 +127,98 @@ export default function AdminSettings() {
               <label className="admin-label">Facebook URL</label>
               <input {...register('facebookUrl')} className="admin-input" placeholder="https://facebook.com/..." />
             </div>
+            <div>
+              <label className="admin-label">Pinterest URL</label>
+              <input {...register('pinterestUrl')} className="admin-input" placeholder="https://pinterest.com/..." />
+            </div>
           </div>
         </div>
 
-        {/* Working Hours */}
+        {/* ── Homepage · Hero Images ─────────────────────────────────────── */}
+        <div className="bg-white border border-stone-200 p-8">
+          <h2 className="font-serif text-xl mb-1">Homepage · Hero Images</h2>
+          <p className="font-sans text-sm text-stone-500 mb-6">
+            The first image is the full-screen hero background. Add multiple for future slideshow support.
+            Click <strong>Save Settings</strong> below after adding or removing images.
+          </p>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {heroFields.map((field, index) => (
+              <div
+                key={field.id}
+                className="relative group aspect-video bg-stone-100 overflow-hidden border border-stone-200"
+              >
+                <img
+                  src={getImageUrl(field.url)}
+                  alt={`Hero ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                {index === 0 && (
+                  <span className="absolute top-2 left-2 bg-amber-700 text-white font-sans text-[10px] px-2 py-0.5 uppercase tracking-wider">
+                    Primary
+                  </span>
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => removeHero(index)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-600 text-white px-3 py-1.5 font-sans text-xs uppercase tracking-wider hover:bg-red-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Upload slot */}
+            <div
+              onClick={() => !uploadingHero && heroFileRef.current?.click()}
+              className="aspect-video border-2 border-dashed border-stone-300 hover:border-stone-900 transition-colors flex flex-col items-center justify-center cursor-pointer"
+            >
+              <input
+                ref={heroFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleHeroUpload}
+              />
+              {uploadingHero ? (
+                <Loader size="sm" />
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-2xl text-stone-400 mb-1">add_photo_alternate</span>
+                  <p className="font-sans text-xs text-stone-400">Add Image</p>
+                </>
+              )}
+            </div>
+          </div>
+
+          {heroFields.length === 0 && (
+            <p className="font-sans text-xs text-amber-700 mt-4">
+              No hero images set — homepage will show a default fallback until you add one and save.
+            </p>
+          )}
+        </div>
+
+        {/* ── Homepage · Philosophy Image ────────────────────────────────── */}
+        <div className="bg-white border border-stone-200 p-8">
+          <h2 className="font-serif text-xl mb-1">Homepage · Philosophy Image</h2>
+          <p className="font-sans text-sm text-stone-500 mb-6">
+            The portrait shown beside the "Philosophy of Curated Care" section. Best at 4:5 aspect ratio.
+          </p>
+          <div className="max-w-xs">
+            <input type="hidden" {...register('philosophyImage')} />
+            <ImageUploadField
+              value={philosophyImageValue}
+              onChange={(url) => setValue('philosophyImage', url, { shouldDirty: true })}
+              uploadFn={settingsApi.uploadImage}
+              label="Philosophy Portrait"
+              aspectClass="aspect-[4/5]"
+            />
+          </div>
+        </div>
+
+        {/* ── Working Hours ──────────────────────────────────────────────── */}
         <div className="bg-white border border-stone-200 p-8">
           <h2 className="font-serif text-xl mb-6">Working Hours</h2>
           <div className="space-y-4">
@@ -121,7 +244,7 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        {/* Save */}
+        {/* ── Save ───────────────────────────────────────────────────────── */}
         <div className="flex justify-end">
           <motion.button
             type="submit"
