@@ -6,6 +6,8 @@ node_modules/
 .env.local
 .env.*.local
 .env.example
+
+Dockerfile
 nginx.config
 
 # Build output
