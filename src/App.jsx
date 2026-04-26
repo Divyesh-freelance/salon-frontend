@@ -14,6 +14,7 @@ import AppointmentConfirmation from './pages/public/AppointmentConfirmation'
 import GalleryPage from './pages/public/GalleryPage'
 import AboutPage from './pages/public/AboutPage'
 import ContactPage from './pages/public/ContactPage'
+import SocialsPage from './pages/public/SocialsPage'
 
 // Admin pages
 import AdminLogin from './pages/admin/AdminLogin'
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/service/:slug" element={<ServiceDetailPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/socials" element={<SocialsPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route

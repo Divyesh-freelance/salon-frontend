@@ -33,23 +33,29 @@ export default function Footer() {
         </div>
 
         {/* Social Links */}
-        {(settings.instagramUrl || settings.facebookUrl) && (
-          <div className="flex gap-8">
+        {(settings.instagramUrl || settings.facebookUrl || settings.pinterestUrl) && (
+          <div className="flex flex-wrap justify-center gap-8">
             {settings.instagramUrl && (
-              <a href={settings.instagramUrl} target="_blank" rel="noreferrer"
-                className="text-stone-400 hover:text-stone-900 transition-colors font-serif text-sm">
+              <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer"
+                className="text-stone-400 hover:text-pink-500 transition-colors font-serif text-sm">
                 Instagram
               </a>
             )}
             {settings.facebookUrl && (
-              <a href={settings.facebookUrl} target="_blank" rel="noreferrer"
-                className="text-stone-400 hover:text-stone-900 transition-colors font-serif text-sm">
+              <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer"
+                className="text-stone-400 hover:text-blue-500 transition-colors font-serif text-sm">
                 Facebook
               </a>
             )}
-            <a href="#" className="text-stone-400 hover:text-stone-900 transition-colors font-serif text-sm">
-              Pinterest
-            </a>
+            {settings.pinterestUrl && (
+              <a href={settings.pinterestUrl} target="_blank" rel="noopener noreferrer"
+                className="text-stone-400 hover:text-red-600 transition-colors font-serif text-sm">
+                Pinterest
+              </a>
+            )}
+            <Link to="/socials" className="text-stone-400 hover:text-amber-600 transition-colors font-serif text-sm">
+              Videos
+            </Link>
           </div>
         )}
 
