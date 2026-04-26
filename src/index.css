@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #fbf9f9;
+    color: #1b1c1c;
+    font-family: 'Manrope', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: #fed488;
+    color: #785a1a;
+  }
+
+  /* Material Symbols */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Luxury hover underline */
+  .luxury-underline {
+    position: relative;
+  }
+  .luxury-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background-color: #775a19;
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .luxury-underline:hover::after {
+    width: 100%;
+  }
+
+  /* Ghost input */
+  .ghost-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #c4c7c7;
+    border-radius: 0;
+    padding: 8px 0;
+    outline: none;
+    transition: border-color 0.3s ease;
+    width: 100%;
+  }
+  .ghost-input:focus {
+    border-bottom-color: #775a19;
+  }
+
+  /* Fade in up animation */
+  .fade-in-up {
+    opacity: 0;
+    animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Stagger delays */
+  .delay-100 { animation-delay: 0.1s; }
+  .delay-200 { animation-delay: 0.2s; }
+  .delay-300 { animation-delay: 0.3s; }
+  .delay-400 { animation-delay: 0.4s; }
+  .delay-500 { animation-delay: 0.5s; }
+}
+
+/* ─── Admin Utilities ────────────────────────────────────────────────────── */
+@layer components {
+  .admin-label {
+    @apply font-sans text-xs uppercase tracking-widest text-stone-500 block mb-2 font-semibold;
+  }
+  .admin-input {
+    @apply w-full border border-stone-200 px-4 py-3 font-sans text-sm text-stone-900 focus:border-stone-900 outline-none transition-colors bg-white;
+  }
+  .form-error {
+    @apply mt-1 text-xs text-red-600 font-sans;
+  }
+}
