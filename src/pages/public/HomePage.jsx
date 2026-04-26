@@ -63,7 +63,7 @@ export default function HomePage() {
         {/* Crossfade background carousel */}
         <div className="absolute inset-0 z-0">
           <AnimatePresence mode="sync">
-            <motion.img
+            {heroImages[heroIndex] && <motion.img
               key={heroIndex}
               className="absolute inset-0 w-full h-full object-cover grayscale-[20%] contrast-[1.05]"
               src={heroImages[heroIndex].url}
@@ -72,7 +72,7 @@ export default function HomePage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-            />
+            />}
           </AnimatePresence>
           <div className="absolute inset-0 bg-black/10" />
         </div>
