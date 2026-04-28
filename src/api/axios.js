@@ -40,7 +40,11 @@ adminApi.interceptors.response.use(
         return adminApi(original)
       } catch {
         localStorage.removeItem('accessToken')
-        window.location.href = '/admin/login'
+        // Only force-redirect to login if the failure happened on an admin page.
+        // On public pages the expired token is simply cleared and the user stays put.
+        if (window.location.pathname.startsWith('/admin')) {
+          window.location.href = '/admin/login'
+        }
       }
     }
     return Promise.reject(error)

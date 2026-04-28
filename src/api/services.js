@@ -95,3 +95,82 @@ export const authApi = {
   me: () => adminApi.get('/admin/auth/me').then((r) => r.data),
   refresh: () => adminApi.post('/admin/auth/refresh').then((r) => r.data),
 }
+
+// ─── Products ────────────────────────────────────────────────────────────────
+export const productsApi = {
+  getAll: (params) => api.get('/products', { params }).then((r) => r.data),
+  getBySlug: (slug) => api.get(`/products/${slug}`).then((r) => r.data),
+  getCategories: () => api.get('/products/categories').then((r) => r.data),
+
+  // Admin
+  adminGetAll: (params) => adminApi.get('/admin/products', { params }).then((r) => r.data),
+  create: (data) => adminApi.post('/admin/products', data).then((r) => r.data),
+  update: (id, data) => adminApi.put(`/admin/products/${id}`, data).then((r) => r.data),
+  remove: (id) => adminApi.delete(`/admin/products/${id}`).then((r) => r.data),
+  uploadImage: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('type', 'products')
+    return adminApi.post('/admin/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data)
+  },
+
+  // Categories (admin)
+  adminGetCategories: (params) => adminApi.get('/admin/product-categories', { params }).then((r) => r.data),
+  createCategory: (data) => adminApi.post('/admin/product-categories', data).then((r) => r.data),
+  updateCategory: (id, data) => adminApi.put(`/admin/product-categories/${id}`, data).then((r) => r.data),
+  removeCategory: (id) => adminApi.delete(`/admin/product-categories/${id}`).then((r) => r.data),
+}
+
+// ─── Orders ──────────────────────────────────────────────────────────────────
+export const ordersApi = {
+  create: (data) => api.post('/orders', data).then((r) => r.data),
+  verifyPayment: (id, data) => api.post(`/orders/${id}/verify-payment`, data).then((r) => r.data),
+  paymentFailed: (id, data) => api.post(`/orders/${id}/payment-failed`, data).then((r) => r.data),
+  getById: (id) => api.get(`/orders/${id}`).then((r) => r.data),
+
+  // Admin
+  adminGetAll: (params) => adminApi.get('/admin/orders', { params }).then((r) => r.data),
+  adminGetById: (id) => adminApi.get(`/admin/orders/${id}`).then((r) => r.data),
+  adminUpdateStatus: (id, data) => adminApi.patch(`/admin/orders/${id}/status`, data).then((r) => r.data),
+}
+
+// ─── Academy ─────────────────────────────────────────────────────────────────
+export const academyApi = {
+  getAll: (params) => api.get('/academy', { params }).then((r) => r.data),
+  getBySlug: (slug) => api.get(`/academy/${slug}`).then((r) => r.data),
+
+  // Admin
+  adminGetAll: (params) => adminApi.get('/admin/academy', { params }).then((r) => r.data),
+  create: (data) => adminApi.post('/admin/academy', data).then((r) => r.data),
+  update: (id, data) => adminApi.put(`/admin/academy/${id}`, data).then((r) => r.data),
+  remove: (id) => adminApi.delete(`/admin/academy/${id}`).then((r) => r.data),
+  uploadImage: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('type', 'academy')
+    return adminApi.post('/admin/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data)
+  },
+}
+
+// ─── Discounts ────────────────────────────────────────────────────────────────
+export const discountsApi = {
+  getAll: (params) => api.get('/discounts', { params }).then((r) => r.data),
+
+  // Admin
+  adminGetAll: (params) => adminApi.get('/admin/discounts', { params }).then((r) => r.data),
+  create: (data) => adminApi.post('/admin/discounts', data).then((r) => r.data),
+  update: (id, data) => adminApi.put(`/admin/discounts/${id}`, data).then((r) => r.data),
+  remove: (id) => adminApi.delete(`/admin/discounts/${id}`).then((r) => r.data),
+  uploadImage: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('type', 'discounts')
+    return adminApi.post('/admin/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data)
+  },
+}
+
+// ─── Customers (admin) ────────────────────────────────────────────────────────
+export const customersApi = {
+  getAll: (params) => adminApi.get('/admin/customers', { params }).then((r) => r.data),
+  getById: (id) => adminApi.get(`/admin/customers/${id}`).then((r) => r.data),
+}

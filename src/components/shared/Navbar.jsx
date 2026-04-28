@@ -3,12 +3,15 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { settingsApi } from '../../api/services'
+import { useCart } from '../../context/CartContext'
 
 const navLinks = [
   { to: '/services', label: 'Services' },
+  { to: '/products', label: 'Shop' },
+  { to: '/academy', label: 'Academy' },
+  { to: '/discounts', label: 'Offers' },
   { to: '/about', label: 'About' },
   { to: '/gallery', label: 'Gallery' },
-  { to: '/socials', label: 'Socials' },
   { to: '/contact', label: 'Contact' },
 ]
 
@@ -24,6 +27,7 @@ export default function Navbar() {
   })
   const salonName = settingsData?.data?.salonName || 'RajLaxmi Makeup Studio'
   const logoImage = settingsData?.data?.logoImage || null
+  const { itemCount } = useCart()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -77,6 +81,21 @@ export default function Navbar() {
 
         {/* CTA */}
         <div className="flex items-center gap-4">
+          {/* Cart icon */}
+          <Link to="/cart" className="relative p-1 text-stone-600 hover:text-stone-900 transition-colors">
+            <span className="material-symbols-outlined text-2xl">shopping_bag</span>
+            {itemCount > 0 && (
+              <motion.span
+                key={itemCount}
+                initial={{ scale: 0.6 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-1 -right-1 w-5 h-5 bg-amber-600 text-white rounded-full flex items-center justify-center font-sans text-[10px] font-bold"
+              >
+                {itemCount > 9 ? '9+' : itemCount}
+              </motion.span>
+            )}
+          </Link>
+
           <motion.button
             onClick={() => navigate('/booking')}
             className="hidden md:block bg-stone-900 text-stone-50 px-8 py-3 font-sans text-xs font-semibold uppercase tracking-[0.1em] hover:bg-amber-700 transition-all duration-300"
