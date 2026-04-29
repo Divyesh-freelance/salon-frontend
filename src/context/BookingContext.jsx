@@ -10,12 +10,13 @@ const initialState = {
   timeSlot: null,
   customerDetails: null,
   bookingId: null,
+  discount: null,   // full discount object selected by customer
 }
 
 function bookingReducer(state, action) {
   switch (action.type) {
     case 'SET_SERVICE':
-      return { ...state, service: action.payload, stylist: null, date: null, timeSlot: null }
+      return { ...state, service: action.payload, stylist: null, date: null, timeSlot: null, discount: null }
     case 'SET_STYLIST':
       return { ...state, stylist: action.payload, date: null, timeSlot: null }
     case 'SET_DATE':
@@ -26,6 +27,8 @@ function bookingReducer(state, action) {
       return { ...state, customerDetails: action.payload }
     case 'SET_BOOKING_ID':
       return { ...state, bookingId: action.payload }
+    case 'SET_DISCOUNT':
+      return { ...state, discount: action.payload }
     case 'NEXT_STEP':
       return { ...state, step: Math.min(state.step + 1, 6) }
     case 'PREV_STEP':
@@ -48,24 +51,32 @@ export function BookingProvider({ children }) {
   const setTimeSlot = (slot) => dispatch({ type: 'SET_TIME_SLOT', payload: slot })
   const setCustomerDetails = (details) => dispatch({ type: 'SET_CUSTOMER_DETAILS', payload: details })
   const setBookingId = (id) => dispatch({ type: 'SET_BOOKING_ID', payload: id })
+  const setDiscount = (discount) => dispatch({ type: 'SET_DISCOUNT', payload: discount })
   const nextStep = () => dispatch({ type: 'NEXT_STEP' })
   const prevStep = () => dispatch({ type: 'PREV_STEP' })
   const goToStep = (step) => dispatch({ type: 'GO_TO_STEP', payload: step })
   const reset = () => dispatch({ type: 'RESET' })
 
   const totalAmount = state.service?.price || 0
+  const discountAmount = state.discount
+    ? parseFloat((totalAmount * (state.discount.discountPercentage / 100)).toFixed(2))
+    : 0
+  const finalAmount = parseFloat((totalAmount - discountAmount).toFixed(2))
 
   return (
     <BookingContext.Provider
       value={{
         ...state,
         totalAmount,
+        discountAmount,
+        finalAmount,
         setService,
         setStylist,
         setDate,
         setTimeSlot,
         setCustomerDetails,
         setBookingId,
+        setDiscount,
         nextStep,
         prevStep,
         goToStep,

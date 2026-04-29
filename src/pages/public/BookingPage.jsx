@@ -98,6 +98,7 @@ export default function BookingPage() {
       notes: booking.customerDetails.notes || '',
       appointmentDate: format(date, 'yyyy-MM-dd'),
       appointmentTime: timeSlot.time,
+      discountId: booking.discount?.id || null,
     })
   }
 
