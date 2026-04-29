@@ -13,10 +13,11 @@ export default function AppointmentSummary({ booking, onConfirm, isSubmitting })
 
   const [showPicker, setShowPicker] = useState(false)
 
+  // Pass serviceId so the API only returns discounts valid for this service
   const { data: discountsData } = useQuery({
-    queryKey: ['active-discounts-booking'],
-    queryFn: () => discountsApi.getAll({ active: 'true', limit: 30 }),
-    enabled: !!service,
+    queryKey: ['active-discounts-booking', service?.id],
+    queryFn: () => discountsApi.getAll({ active: 'true', limit: 30, serviceId: service?.id }),
+    enabled: !!service?.id,
     staleTime: 1000 * 60 * 5,
   })
 
