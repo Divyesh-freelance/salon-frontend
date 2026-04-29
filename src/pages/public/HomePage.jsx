@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { servicesApi, stylistsApi, settingsApi } from '../../api/services'
+import { servicesApi, stylistsApi, settingsApi, productsApi } from '../../api/services'
 import ServiceCard from '../../components/shared/ServiceCard'
 import StylistCard from '../../components/shared/StylistCard'
 import CTASection from '../../components/shared/CTASection'
 import Loader from '../../components/shared/Loader'
 import TestimonialsSection from '../../components/shared/TestimonialsSection'
 import SocialVideosSection from '../../components/shared/SocialVideosSection'
+import { formatPrice, getImageUrl } from '../../utils/format'
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -21,6 +22,12 @@ export default function HomePage() {
   const { data: stylistsData, isLoading: stylistsLoading } = useQuery({
     queryKey: ['stylists', { active: 'true', limit: 3 }],
     queryFn: () => stylistsApi.getAll({ active: 'true', limit: 3 }),
+  })
+
+  const { data: productsData } = useQuery({
+    queryKey: ['products-home', { active: 'true', limit: 8 }],
+    queryFn: () => productsApi.getAll({ active: 'true', limit: 8 }),
+    staleTime: 1000 * 60 * 10,
   })
 
   const { data: settingsData, isLoading: settingsLoading } = useQuery({
@@ -280,6 +287,104 @@ export default function HomePage() {
             {stylistsData.data.map((stylist, i) => (
               <StylistCard key={stylist.id} stylist={stylist} index={i} />
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* ─── Products Used In Studio ──────────────────────────────────────── */}
+      {productsData?.data?.length > 0 && (
+        <section className="py-section-gap bg-stone-50">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="flex justify-between items-end mb-16">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7 }}
+              >
+                <span className="font-sans text-xs font-semibold text-amber-700 tracking-widest uppercase block mb-4">
+                  Our Studio Products
+                </span>
+                <h2 className="font-serif text-4xl md:text-5xl">Used In Our Studio</h2>
+                <p className="font-sans text-stone-500 text-sm mt-3 max-w-md">
+                  Handpicked professional products we trust and use in every treatment — now available for you.
+                </p>
+              </motion.div>
+              <div className="hidden md:block">
+                <Link
+                  to="/shop"
+                  className="group flex items-center gap-4 font-sans text-xs font-semibold uppercase tracking-widest hover:text-amber-700 transition-colors"
+                >
+                  Shop All
+                  <span className="material-symbols-outlined group-hover:translate-x-2 transition-transform duration-300">
+                    arrow_forward
+                  </span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Product grid — horizontal scroll on mobile */}
+            <div className="flex gap-5 overflow-x-auto md:grid md:grid-cols-4 no-scrollbar pb-4 md:pb-0">
+              {productsData.data.map((product, i) => (
+                <motion.div
+                  key={product.id}
+                  className="flex-shrink-0 w-56 md:w-auto group"
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.5, delay: i * 0.06 }}
+                >
+                  <Link to={`/shop/${product.slug}`} className="block">
+                    {/* Image */}
+                    <div className="aspect-[3/4] bg-stone-100 overflow-hidden mb-4 relative">
+                      <img
+                        src={getImageUrl(product.thumbnail)}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        loading="lazy"
+                      />
+                      {product.discountPercentage > 0 && (
+                        <div className="absolute top-3 left-3 bg-amber-700 text-white px-2 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-wider">
+                          {Math.round(product.discountPercentage)}% Off
+                        </div>
+                      )}
+                    </div>
+                    {/* Info */}
+                    <div>
+                      {product.category && (
+                        <span className="font-sans text-[10px] uppercase tracking-widest text-stone-400 block mb-1">
+                          {product.category?.name || product.categoryId || ''}
+                        </span>
+                      )}
+                      <h3 className="font-serif text-base text-stone-900 group-hover:text-amber-700 transition-colors leading-snug line-clamp-2 mb-2">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span className="font-sans text-sm font-semibold text-stone-900">
+                          {formatPrice(product.finalPrice)}
+                        </span>
+                        {product.discountPercentage > 0 && (
+                          <span className="font-sans text-xs text-stone-400 line-through">
+                            {formatPrice(product.price)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Mobile "Shop All" CTA */}
+            <div className="mt-8 text-center md:hidden">
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2 font-sans text-xs font-semibold uppercase tracking-widest text-stone-900 border-b border-stone-900 pb-1 hover:text-amber-700 hover:border-amber-700 transition-colors"
+              >
+                Shop All Products
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </Link>
+            </div>
           </div>
         </section>
       )}

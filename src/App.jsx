@@ -33,6 +33,7 @@ import CheckoutPage from './pages/public/CheckoutPage'
 import OrderConfirmationPage from './pages/public/OrderConfirmationPage'
 import AcademyPage from './pages/public/AcademyPage'
 import AcademyDetailPage from './pages/public/AcademyDetailPage'
+import AcademyEnrollmentPage from './pages/public/AcademyEnrollmentPage'
 import DiscountsPage from './pages/public/DiscountsPage'
 
 // Admin pages — existing
@@ -79,12 +80,15 @@ export default function App() {
 
             {/* New modules */}
             <Route path="/products" element={<ProductsPage />} />
+            <Route path="/shop" element={<ProductsPage />} />
+            <Route path="/shop/:slug" element={<ProductDetailPage />} />
             <Route path="/products/:slug" element={<ProductDetailPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/order-confirmation/:id" element={<OrderConfirmationPage />} />
             <Route path="/academy" element={<AcademyPage />} />
             <Route path="/academy/:slug" element={<AcademyDetailPage />} />
+            <Route path="/academy-enrollment/:id" element={<AcademyEnrollmentPage />} />
             <Route path="/discounts" element={<DiscountsPage />} />
           </Route>
 

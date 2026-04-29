@@ -1,14 +1,197 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
+import { Link, useParams, useNavigate } from 'react-router-dom'
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { useForm } from 'react-hook-form'
+import { motion, AnimatePresence } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { academyApi } from '../../api/services'
 import { formatPrice, getImageUrl } from '../../utils/format'
 import Loader from '../../components/shared/Loader'
 
+// Dynamically load Razorpay script
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true)
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+}
+
+function EnrollModal({ course, onClose }) {
+  const navigate = useNavigate()
+  const { register, handleSubmit, formState: { errors } } = useForm()
+
+  const enrollMutation = useMutation({
+    mutationFn: (data) => academyApi.enroll(data),
+    onError: (err) => toast.error(err.response?.data?.message || 'Enrollment failed. Please try again.'),
+  })
+
+  const onSubmit = async (formData) => {
+    const result = await enrollMutation.mutateAsync({
+      courseId: course.id,
+      studentName: formData.studentName,
+      studentEmail: formData.studentEmail,
+      studentPhone: formData.studentPhone,
+      notes: formData.notes || '',
+    })
+
+    const { enrollment, razorpayOrder, razorpayKeyId } = result.data
+
+    // ── Scaffold mode (no Razorpay keys) ─────────────────────────────────────
+    if (!razorpayOrder || !razorpayKeyId) {
+      toast.success('Enrollment registered! Our team will contact you shortly.')
+      navigate(`/academy-enrollment/${enrollment.id}`)
+      return
+    }
+
+    // ── Live Razorpay mode ────────────────────────────────────────────────────
+    const scriptLoaded = await loadRazorpayScript()
+    if (!scriptLoaded) {
+      toast.error('Payment gateway failed to load. Please refresh and try again.')
+      return
+    }
+
+    const options = {
+      key: razorpayKeyId,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      name: 'RajLaxmi Academy',
+      description: course.title,
+      image: getImageUrl(course.thumbnail),
+      order_id: razorpayOrder.id,
+      handler: async (response) => {
+        try {
+          await academyApi.verifyPayment(enrollment.id, response)
+          toast.success('Payment successful! Welcome to the course.')
+          navigate(`/academy-enrollment/${enrollment.id}`)
+        } catch (err) {
+          toast.error(err.response?.data?.message || 'Payment verification failed.')
+          navigate(`/academy-enrollment/${enrollment.id}?status=failed`)
+        }
+      },
+      prefill: {
+        name: formData.studentName,
+        email: formData.studentEmail,
+        contact: formData.studentPhone,
+      },
+      theme: { color: '#1c1917' },
+      modal: {
+        ondismiss: async () => {
+          await academyApi.paymentFailed(enrollment.id, { reason: 'modal_dismissed' }).catch(() => {})
+          toast.error('Payment cancelled.')
+        },
+      },
+    }
+
+    const rzp = new window.Razorpay(options)
+    rzp.on('payment.failed', async (response) => {
+      await academyApi.paymentFailed(enrollment.id, response.error).catch(() => {})
+      toast.error(response.error?.description || 'Payment failed.')
+      navigate(`/academy-enrollment/${enrollment.id}?status=failed`)
+    })
+    rzp.open()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        className="absolute inset-0 bg-black/50"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={onClose}
+      />
+      <motion.div
+        className="relative bg-white w-full max-w-lg p-8 shadow-2xl"
+        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <button onClick={onClose} className="absolute top-4 right-4 text-stone-400 hover:text-stone-900">
+          <span className="material-symbols-outlined">close</span>
+        </button>
+
+        <h2 className="font-serif text-2xl text-stone-900 mb-1">Enroll in Course</h2>
+        <p className="font-sans text-sm text-stone-500 mb-6">{course.title}</p>
+
+        <div className="bg-stone-50 rounded p-4 mb-6 flex justify-between items-center">
+          <span className="font-sans text-sm text-stone-600">Course Fee</span>
+          <div className="text-right">
+            <span className="font-serif text-xl text-stone-900">{formatPrice(course.finalPrice)}</span>
+            {course.discountPercentage > 0 && (
+              <p className="font-sans text-xs text-stone-400 line-through">{formatPrice(course.price)}</p>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="font-sans text-xs uppercase tracking-widest text-stone-500 block mb-2 font-semibold">Full Name *</label>
+            <input
+              {...register('studentName', { required: 'Name is required', minLength: { value: 2, message: 'Min 2 characters' } })}
+              className="w-full border-b border-stone-300 py-2 font-sans text-sm text-stone-900 focus:outline-none focus:border-stone-900 transition-colors bg-transparent"
+              placeholder="Enter your full name"
+            />
+            {errors.studentName && <p className="mt-1 text-xs text-red-600 font-sans">{errors.studentName.message}</p>}
+          </div>
+
+          <div>
+            <label className="font-sans text-xs uppercase tracking-widest text-stone-500 block mb-2 font-semibold">Email Address *</label>
+            <input
+              {...register('studentEmail', { required: 'Email is required', pattern: { value: /^\S+@\S+\.\S+$/, message: 'Valid email required' } })}
+              type="email"
+              className="w-full border-b border-stone-300 py-2 font-sans text-sm text-stone-900 focus:outline-none focus:border-stone-900 transition-colors bg-transparent"
+              placeholder="your@email.com"
+            />
+            {errors.studentEmail && <p className="mt-1 text-xs text-red-600 font-sans">{errors.studentEmail.message}</p>}
+          </div>
+
+          <div>
+            <label className="font-sans text-xs uppercase tracking-widest text-stone-500 block mb-2 font-semibold">Phone Number *</label>
+            <input
+              {...register('studentPhone', { required: 'Phone is required', minLength: { value: 7, message: 'Valid phone required' } })}
+              type="tel"
+              className="w-full border-b border-stone-300 py-2 font-sans text-sm text-stone-900 focus:outline-none focus:border-stone-900 transition-colors bg-transparent"
+              placeholder="+91 98765 43210"
+            />
+            {errors.studentPhone && <p className="mt-1 text-xs text-red-600 font-sans">{errors.studentPhone.message}</p>}
+          </div>
+
+          <div>
+            <label className="font-sans text-xs uppercase tracking-widest text-stone-500 block mb-2 font-semibold">Message (Optional)</label>
+            <textarea
+              {...register('notes')}
+              rows={2}
+              className="w-full border-b border-stone-300 py-2 font-sans text-sm text-stone-900 focus:outline-none focus:border-stone-900 transition-colors bg-transparent resize-none"
+              placeholder="Any questions or special requirements..."
+            />
+          </div>
+
+          <motion.button
+            type="submit"
+            disabled={enrollMutation.isPending}
+            className="w-full mt-2 bg-stone-900 text-white py-4 font-sans text-xs font-semibold uppercase tracking-[0.2em] hover:bg-amber-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {enrollMutation.isPending ? 'Processing...' : `Pay ${formatPrice(course.finalPrice)}`}
+          </motion.button>
+
+          <p className="text-center font-sans text-[10px] text-stone-400 uppercase tracking-wider mt-2">
+            Secured by Razorpay · No cancellations after payment
+          </p>
+        </form>
+      </motion.div>
+    </div>
+  )
+}
+
 export default function AcademyDetailPage() {
   const { slug } = useParams()
   const [activeImg, setActiveImg] = useState(0)
+  const [enrollOpen, setEnrollOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['academy-course', slug],
@@ -132,7 +315,7 @@ export default function AcademyDetailPage() {
             )}
           </div>
 
-          {/* Sticky booking card */}
+          {/* Sticky enrollment card */}
           <div className="lg:col-span-1">
             <div className="bg-white border border-stone-200 p-8 sticky top-28">
               <div className="flex items-center gap-2 mb-4">
@@ -150,21 +333,23 @@ export default function AcademyDetailPage() {
                 )}
               </div>
 
-              <Link
-                to="/contact"
+              <motion.button
+                onClick={() => setEnrollOpen(true)}
                 className="block w-full text-center bg-stone-900 text-white py-4 font-sans text-xs font-semibold uppercase tracking-widest hover:bg-amber-700 transition-all duration-300 mb-3"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
               >
-                Enquire Now
-              </Link>
-              <Link
-                to="/contact"
-                className="block w-full text-center border border-stone-200 py-4 font-sans text-xs uppercase tracking-widest text-stone-600 hover:border-stone-900 transition-all duration-300"
-              >
-                Apply for Admission
-              </Link>
+                Enroll Now
+              </motion.button>
 
               <div className="mt-8 pt-6 border-t border-stone-100 space-y-3">
-                {[['schedule', 'Duration: ' + course.duration], ['workspace_premium', 'Certificate on completion'], ['groups', 'Small batch sizes'], ['support_agent', 'Lifetime support']].map(([icon, text]) => (
+                {[
+                  ['schedule', 'Duration: ' + course.duration],
+                  ['workspace_premium', 'Certificate on completion'],
+                  ['groups', 'Small batch sizes'],
+                  ['support_agent', 'Lifetime support'],
+                  ['lock', 'Secured payment via Razorpay'],
+                ].map(([icon, text]) => (
                   <div key={icon} className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-sm text-amber-600">{icon}</span>
                     <span className="font-sans text-xs text-stone-600">{text}</span>
@@ -198,6 +383,11 @@ export default function AcademyDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Enrollment Modal */}
+      <AnimatePresence>
+        {enrollOpen && <EnrollModal course={course} onClose={() => setEnrollOpen(false)} />}
+      </AnimatePresence>
     </>
   )
 }

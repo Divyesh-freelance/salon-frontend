@@ -139,6 +139,12 @@ export const academyApi = {
   getAll: (params) => api.get('/academy', { params }).then((r) => r.data),
   getBySlug: (slug) => api.get(`/academy/${slug}`).then((r) => r.data),
 
+  // Enrollments (public)
+  enroll: (data) => api.post('/academy/enroll', data).then((r) => r.data),
+  verifyPayment: (id, data) => api.post(`/academy/enrollments/${id}/verify-payment`, data).then((r) => r.data),
+  paymentFailed: (id, data) => api.post(`/academy/enrollments/${id}/payment-failed`, data).then((r) => r.data),
+  getEnrollmentById: (id) => api.get(`/academy/enrollments/${id}`).then((r) => r.data),
+
   // Admin
   adminGetAll: (params) => adminApi.get('/admin/academy', { params }).then((r) => r.data),
   create: (data) => adminApi.post('/admin/academy', data).then((r) => r.data),
@@ -150,6 +156,10 @@ export const academyApi = {
     fd.append('type', 'academy')
     return adminApi.post('/admin/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data)
   },
+
+  // Admin enrollments
+  adminGetEnrollments: (params) => adminApi.get('/admin/academy/enrollments', { params }).then((r) => r.data),
+  adminUpdateCertificate: (id, data) => adminApi.patch(`/admin/academy/enrollments/${id}/certificate`, data).then((r) => r.data),
 }
 
 // ─── Discounts ────────────────────────────────────────────────────────────────
