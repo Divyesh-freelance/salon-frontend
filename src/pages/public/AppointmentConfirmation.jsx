@@ -60,7 +60,7 @@ export default function AppointmentConfirmation() {
         className="border border-stone-200 p-8 md:p-12 bg-white mb-8"
       >
         <h2 className="font-serif text-2xl mb-8 pb-4 border-b border-stone-100">Appointment Details</h2>
-        <div className="space-y-6">
+        <div className="space-y-0">
           {[
             { label: 'Booking Reference', value: `#${booking.id.slice(-8).toUpperCase()}` },
             { label: 'Service', value: booking.service.title },
@@ -68,7 +68,6 @@ export default function AppointmentConfirmation() {
             { label: 'Artisan', value: `${booking.stylist.name} · ${booking.stylist.title}` },
             { label: 'Date', value: formatDate(booking.appointmentDate) },
             { label: 'Time', value: formatTime(booking.appointmentTime) },
-            { label: 'Total', value: formatPrice(booking.totalAmount) },
             { label: 'Status', value: booking.status.charAt(0).toUpperCase() + booking.status.slice(1) },
           ].map(({ label, value }) => (
             <div key={label} className="flex justify-between items-start py-3 border-b border-stone-50">
@@ -76,6 +75,32 @@ export default function AppointmentConfirmation() {
               <span className="font-sans text-sm font-semibold text-stone-900 text-right">{value}</span>
             </div>
           ))}
+
+          {/* Price breakdown */}
+          {booking.discount ? (
+            <>
+              <div className="flex justify-between items-center py-3 border-b border-stone-50">
+                <span className="font-sans text-sm text-stone-500 uppercase tracking-wider">Subtotal</span>
+                <span className="font-sans text-sm text-stone-500">{formatPrice(booking.totalAmount)}</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-stone-50">
+                <span className="font-sans text-sm text-amber-700 uppercase tracking-wider flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">local_offer</span>
+                  {booking.discount.title} (−{Math.round(booking.discount.discountPercentage)}%)
+                </span>
+                <span className="font-sans text-sm font-semibold text-amber-700">−{formatPrice(booking.discountAmount)}</span>
+              </div>
+              <div className="flex justify-between items-center py-4 border-b border-stone-100">
+                <span className="font-sans text-sm text-stone-900 font-semibold uppercase tracking-wider">Total Payable</span>
+                <span className="font-serif text-xl font-bold text-stone-900">{formatPrice(booking.finalAmount)}</span>
+              </div>
+            </>
+          ) : (
+            <div className="flex justify-between items-center py-4 border-b border-stone-100">
+              <span className="font-sans text-sm text-stone-900 font-semibold uppercase tracking-wider">Total</span>
+              <span className="font-serif text-xl font-bold text-stone-900">{formatPrice(booking.totalAmount)}</span>
+            </div>
+          )}
         </div>
       </motion.div>
 

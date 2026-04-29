@@ -9,7 +9,10 @@ import './index.css'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,       // 5 min — don't refetch fresh data
+      gcTime: 1000 * 60 * 10,          // keep cache for 10 min
+      refetchOnWindowFocus: false,     // KEY: stops a burst of 5–8 requests every tab-switch
+      refetchOnReconnect: false,       // don't spam on network flap
       retry: 1,
     },
   },

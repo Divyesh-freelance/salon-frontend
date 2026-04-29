@@ -53,10 +53,21 @@ export default function BookingPage() {
     enabled: !!service?.id,
   })
 
-  // Days of week the selected stylist doesn't work (0=Sun … 6=Sat)
-  const offDays = stylist?.availability
-    ? stylist.availability.filter((a) => a.isOff).map((a) => a.dayOfWeek)
-    : []
+  // Compute which days of the week should be unselectable in the calendar.
+  // A day is OFF if:
+  //   a) The stylist has an availability record with isOff = true, OR
+  //   b) The stylist has NO availability record for that day at all.
+  // Without this, days with no record look clickable but always return empty slots.
+  const offDays = (() => {
+    if (!stylist?.availability?.length) {
+      // No availability data at all → block every day until admin sets it up
+      return [0, 1, 2, 3, 4, 5, 6]
+    }
+    const configuredDays = new Set(stylist.availability.map((a) => a.dayOfWeek))
+    const markedOff = stylist.availability.filter((a) => a.isOff).map((a) => a.dayOfWeek)
+    const notConfigured = [0, 1, 2, 3, 4, 5, 6].filter((d) => !configuredDays.has(d))
+    return [...new Set([...markedOff, ...notConfigured])]
+  })()
 
   const { data: availabilityData, isLoading: slotsLoading } = useQuery({
     queryKey: ['availability', stylist?.id, service?.id, date ? format(date, 'yyyy-MM-dd') : null],
@@ -254,24 +265,45 @@ export default function BookingPage() {
                   <h2 className="font-serif text-3xl">Select Schedule</h2>
                 </div>
 
-                <BookingCalendar
-                  selected={date}
-                  onSelect={setDate}
-                  disabledDayOfWeek={offDays}
-                />
-
-                {date && (
-                  <div>
-                    {slotsLoading ? (
-                      <Loader className="py-8" />
-                    ) : (
-                      <TimeSlotPicker
-                        slots={slots}
-                        selected={timeSlot}
-                        onSelect={(slot) => { setTimeSlot(slot); nextStep() }}
-                      />
-                    )}
+                {/* If stylist has zero availability records, show a notice instead of a blank calendar */}
+                {stylist && !stylist.availability?.length ? (
+                  <div className="py-12 text-center border border-stone-100 bg-stone-50">
+                    <span className="material-symbols-outlined text-3xl text-stone-300 block mb-3">event_busy</span>
+                    <p className="font-sans text-sm text-stone-500">
+                      {stylist.name}'s schedule hasn't been set up yet.
+                    </p>
+                    <p className="font-sans text-xs text-stone-400 mt-1">
+                      Please choose a different artisan or check back later.
+                    </p>
+                    <button
+                      onClick={prevStep}
+                      className="mt-6 font-sans text-xs uppercase tracking-widest text-stone-600 border-b border-stone-400 pb-0.5 hover:text-amber-700 hover:border-amber-700 transition-colors"
+                    >
+                      ← Choose another artisan
+                    </button>
                   </div>
+                ) : (
+                  <>
+                    <BookingCalendar
+                      selected={date}
+                      onSelect={setDate}
+                      disabledDayOfWeek={offDays}
+                    />
+
+                    {date && (
+                      <div>
+                        {slotsLoading ? (
+                          <Loader className="py-8" />
+                        ) : (
+                          <TimeSlotPicker
+                            slots={slots}
+                            selected={timeSlot}
+                            onSelect={(slot) => { setTimeSlot(slot); nextStep() }}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </motion.section>
             )}

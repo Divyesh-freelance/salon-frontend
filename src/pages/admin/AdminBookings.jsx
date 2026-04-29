@@ -71,7 +71,7 @@ export default function AdminBookings() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-stone-100 bg-stone-50">
-                {['Customer', 'Service', 'Artisan', 'Date & Time', 'Amount', 'Status', 'Actions'].map((h) => (
+                {['Customer', 'Service', 'Artisan', 'Date & Time', 'Amount / Discount', 'Status', 'Actions'].map((h) => (
                   <th key={h} className="px-6 py-3 text-left font-sans text-xs text-stone-500 uppercase tracking-widest">
                     {h}
                   </th>
@@ -102,7 +102,19 @@ export default function AdminBookings() {
                       <p className="font-sans text-sm">{formatDateShort(b.appointmentDate)}</p>
                       <p className="font-sans text-xs text-stone-400">{formatTime(b.appointmentTime)}</p>
                     </td>
-                    <td className="px-6 py-4 font-sans text-sm font-semibold">{formatPrice(b.totalAmount)}</td>
+                    <td className="px-6 py-4">
+                      {b.discount ? (
+                        <div>
+                          <p className="font-sans text-sm font-semibold text-stone-900">{formatPrice(b.finalAmount)}</p>
+                          <p className="font-sans text-xs text-stone-400 line-through">{formatPrice(b.totalAmount)}</p>
+                          <span className="inline-flex items-center gap-0.5 bg-amber-50 text-amber-700 border border-amber-100 font-sans text-[10px] uppercase tracking-wider px-1.5 py-0.5 mt-0.5">
+                            -{Math.round(b.discount.discountPercentage)}% · {b.discount.title}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="font-sans text-sm font-semibold">{formatPrice(b.totalAmount)}</p>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full font-sans text-xs font-semibold uppercase ${getStatusColor(b.status)}`}>
                         {b.status}
